@@ -1,4 +1,6 @@
-// Verifica autenticação
+// ================================
+// AUTENTICAÇÃO
+// ================================
 (function() {
   const token = localStorage.getItem('token');
   if (!token && !window.location.pathname.includes('login')) {
@@ -6,38 +8,87 @@
     return;
   }
 
-  // Aplica tema salvo
   const temaSalvo = localStorage.getItem('tema');
   if (temaSalvo === 'escuro') {
     document.body.setAttribute('data-tema', 'escuro');
   }
 })();
 
-// Adiciona token em todas as requisições
+// Intercepta todas as requisições adicionando o token
 const _fetch = window.fetch;
 window.fetch = function(url, options) {
   options = options || {};
   options.headers = options.headers || {};
   const token = localStorage.getItem('token');
   if (token) options.headers['Authorization'] = 'Bearer ' + token;
-  return _fetch(url, options);
+  return _fetch(url, options).then(function(resp) {
+    // Token expirado — redireciona para login
+    if (resp.status === 401 || resp.status === 403) {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+    return resp;
+  });
 };
 
-function classeModalidade(modalidade) {
-  const mapa = {
-    'Jiu-Jitsu': 'evento-bjj',
-    'Muay Thai': 'evento-mt',
-    'Karatê': 'evento-kt',
-    'Ninjutsu': 'evento-nj',
-    'Krav Maga': 'evento-kv'
-  };
-  return mapa[modalidade] || 'evento-bjj';
+// ================================
+// PERFIL E SIDEBAR
+// ================================
+
+function getPerfil() {
+  return localStorage.getItem('perfil') || 'professor';
 }
 
-async function buscarAulas() {
-  const resposta = await fetch('/api/aulas');
-  return await resposta.json();
+function getNome() {
+  return localStorage.getItem('nome') || '';
 }
+
+function getProfessorId() {
+  return localStorage.getItem('professorId') || null;
+}
+
+// Itens visíveis por perfil
+const acessoAdmin = [
+  'dashboard', 'lista', 'experimentais',
+  'matriculados', 'matriculas', 'mensalidades',
+  'professores', 'eventos', 'aniversarios', 'espera'
+];
+
+const acessoProfessor = [
+  'dashboard', 'lista', 'matriculados', 'mensalidades', 'aniversarios'
+];
+
+function configurarSidebar() {
+  const perfil = getPerfil();
+  const nome   = getNome();
+  const acesso = perfil === 'admin' ? acessoAdmin : acessoProfessor;
+
+  // Preenche nome e perfil
+  const elNome   = document.getElementById('usuario-nome');
+  const elPerfil = document.getElementById('usuario-perfil');
+  if (elNome)   elNome.textContent   = nome;
+  if (elPerfil) elPerfil.textContent = perfil === 'admin' ? 'Administrador' : 'Professor';
+
+  // Esconde itens sem acesso
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
+    const pagina = item.getAttribute('data-page');
+    if (!acesso.includes(pagina)) {
+      item.style.display = 'none';
+    }
+  });
+
+  // Esconde grupos vazios
+  document.querySelectorAll('.nav-grupo').forEach(function(grupo) {
+    const visíveis = grupo.querySelectorAll('.nav-item:not([style*="none"])');
+    if (visíveis.length === 0) {
+      grupo.style.display = 'none';
+    }
+  });
+}
+
+// ================================
+// TEMA
+// ================================
 
 function alternarTema() {
   const atual = document.body.getAttribute('data-tema');
@@ -54,25 +105,36 @@ function alternarTema() {
   }
 }
 
-// Aplica tema salvo ao carregar
-(function() {
-  const temaSalvo = localStorage.getItem('tema');
-  if (temaSalvo === 'escuro') {
-    document.body.setAttribute('data-tema', 'escuro');
-  }
-})();
+// ================================
+// LOGOUT
+// ================================
 
 function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('perfil');
-  localStorage.removeItem('nome');
+  localStorage.clear();
   window.location.href = '/login.html';
 }
 
-// Preenche nome e perfil na sidebar
+// ================================
+// UTILITÁRIOS
+// ================================
+
+function classeModalidade(modalidade) {
+  const mapa = {
+    'Jiu-Jitsu': 'evento-bjj',
+    'Muay Thai':  'evento-mt',
+    'Karatê':     'evento-kt',
+    'Ninjutsu':   'evento-nj',
+    'Krav Maga':  'evento-kv'
+  };
+  return mapa[modalidade] || 'evento-bjj';
+}
+
+async function buscarAulas() {
+  const resposta = await fetch('/api/aulas');
+  return await resposta.json();
+}
+
+// Configura sidebar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-  const nome   = localStorage.getItem('nome');
-  const perfil = localStorage.getItem('perfil');
-  if (nome)   document.getElementById('usuario-nome').textContent   = nome;
-  if (perfil) document.getElementById('usuario-perfil').textContent = perfil === 'admin' ? 'Administrador' : 'Professor';
+  configurarSidebar();
 });

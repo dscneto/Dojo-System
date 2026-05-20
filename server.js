@@ -71,12 +71,23 @@ app.delete('/api/professores/:id', async function(req, res) {
 // ================================
 
 app.get('/api/aulas', async function(req, res) {
-  const resultado = await pool.query(`
-    SELECT a.*, p.nome AS nome_professor
-    FROM aulas a
-    LEFT JOIN professores p ON a.professor_id = p.id
-    ORDER BY a.data, a.horario
-  `);
+  const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
+  let usuario = null;
+
+  if (token) {
+    try { usuario = jwt.verify(token, JWT_SECRET); } catch(e) {}
+  }
+
+  let query  = 'SELECT a.*, p.nome AS nome_professor FROM aulas a LEFT JOIN professores p ON a.professor_id = p.id';
+  let params = [];
+
+  if (usuario && usuario.perfil === 'professor') {
+    query  += ' WHERE a.professor_id = $1';
+    params  = [usuario.id];
+  }
+
+  query += ' ORDER BY a.data, a.horario';
+  const resultado = await pool.query(query, params);
   res.json(resultado.rows);
 });
 
@@ -121,23 +132,24 @@ app.get('/api/horarios', async function(req, res) {
 // ================================
 
 app.get('/api/alunos', async function(req, res) {
-  const resultado = await pool.query(`
-    SELECT a.*, p.nome AS nome_professor
-    FROM alunos a
-    LEFT JOIN professores p ON a.professor_id = p.id
-    ORDER BY a.nome
-  `);
-  res.json(resultado.rows);
-});
+  const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
+  let usuario = null;
 
-app.get('/api/alunos/:id', async function(req, res) {
-  const resultado = await pool.query(`
-    SELECT a.*, p.nome AS nome_professor
-    FROM alunos a
-    LEFT JOIN professores p ON a.professor_id = p.id
-    WHERE a.id = $1
-  `, [req.params.id]);
-  res.json(resultado.rows[0]);
+  if (token) {
+    try { usuario = jwt.verify(token, JWT_SECRET); } catch(e) {}
+  }
+
+  let query  = 'SELECT a.*, p.nome AS nome_professor FROM alunos a LEFT JOIN professores p ON a.professor_id = p.id';
+  let params = [];
+
+  if (usuario && usuario.perfil === 'professor') {
+    query  += ' WHERE a.professor_id = $1';
+    params  = [usuario.id];
+  }
+
+  query += ' ORDER BY a.nome';
+  const resultado = await pool.query(query, params);
+  res.json(resultado.rows);
 });
 
 app.post('/api/alunos', async function(req, res) {
@@ -355,12 +367,18 @@ app.post('/api/login', async function(req, res) {
   if (!senhaCorreta) return res.status(401).json({ erro: 'Senha incorreta' });
 
   const token = jwt.sign(
-    { id: professor.rows[0].id, usuario, perfil: 'professor', nome: professor.rows[0].nome },
-    JWT_SECRET,
-    { expiresIn: '12h' }
-  );
+  { id: professor.rows[0].id, usuario, perfil: 'professor', nome: professor.rows[0].nome },
+  JWT_SECRET,
+  { expiresIn: '12h' }
+);
 
-  res.json({ token, perfil: 'professor', nome: professor.rows[0].nome });
+res.json({
+  token,
+  perfil: 'professor',
+  nome: professor.rows[0].nome,
+  professorId: professor.rows[0].id
+});
+
 });
 
 // Middleware de autenticação

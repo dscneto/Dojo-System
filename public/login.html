@@ -165,8 +165,11 @@
       localStorage.setItem('token',  dados.token);
       localStorage.setItem('perfil', dados.perfil);
       localStorage.setItem('nome',   dados.nome);
-
+      if (dados.professorId) {
+        localStorage.setItem('professorId', dados.professorId);
+      }
       window.location.href = '/index.html';
+    
     });
   </script>
 </body>
