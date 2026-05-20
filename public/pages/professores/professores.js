@@ -13,7 +13,7 @@ function renderizarProfessores(professores) {
   const tbody = document.getElementById('tbody-professores');
 
   if (professores.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:var(--cor-texto-fraco);">Nenhum professor cadastrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--cor-texto-fraco);">Nenhum professor cadastrado.</td></tr>';
     return;
   }
 
@@ -30,6 +30,7 @@ function renderizarProfessores(professores) {
         <td class="td-fraco">${p.telefone || '—'}</td>
         <td>${modalidades}</td>
         <td class="td-fraco">${unidades}</td>
+        <td class="td-fraco">${p.usuario || '—'}</td>
         <td>
           <button class="btn-acao" onclick='editarProfessor(${JSON.stringify(p)})'>✎</button>
           <button class="btn-acao" onclick="deletarProfessor(${p.id})">✕</button>
@@ -60,13 +61,13 @@ function editarProfessor(professor) {
   document.getElementById('prof-nome').value       = professor.nome;
   document.getElementById('prof-telefone').value   = professor.telefone || '';
   document.getElementById('prof-nascimento').value = professor.data_nascimento || '';
+  document.getElementById('prof-usuario').value    = professor.usuario || '';
+  document.getElementById('prof-senha').value      = '';
 
-  // Marca checkboxes de unidades
   document.querySelectorAll('input[name="unidade"]').forEach(function(cb) {
     cb.checked = professor.unidades ? professor.unidades.includes(cb.value) : false;
   });
 
-  // Marca checkboxes de modalidades
   document.querySelectorAll('input[name="modalidade"]').forEach(function(cb) {
     cb.checked = professor.modalidades ? professor.modalidades.includes(cb.value) : false;
   });
@@ -98,8 +99,15 @@ document.getElementById('form-professor').addEventListener('submit', async funct
     telefone:        document.getElementById('prof-telefone').value,
     data_nascimento: document.getElementById('prof-nascimento').value,
     unidades:        unidades,
-    modalidades:     modalidades
+    modalidades:     modalidades,
+    usuario:         document.getElementById('prof-usuario').value,
+    senha:           document.getElementById('prof-senha').value
   };
+
+  // Não envia senha vazia na edição
+  if (idProfessorEditando && !professor.senha) {
+    delete professor.senha;
+  }
 
   if (idProfessorEditando) {
     await fetch('/api/professores/' + idProfessorEditando, {

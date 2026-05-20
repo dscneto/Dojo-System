@@ -36,20 +36,28 @@ app.get('/api/professores', async function(req, res) {
 });
 
 app.post('/api/professores', async function(req, res) {
-  const { nome, telefone, data_nascimento, unidades, modalidades } = req.body;
+  const { nome, telefone, data_nascimento, unidades, modalidades, usuario, senha } = req.body;
   const resultado = await pool.query(
-    'INSERT INTO professores (nome, telefone, data_nascimento, unidades, modalidades) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-    [nome, telefone, data_nascimento, unidades, modalidades]
+    'INSERT INTO professores (nome, telefone, data_nascimento, unidades, modalidades, usuario, senha) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+    [nome, telefone, data_nascimento, unidades, modalidades, usuario, senha]
   );
   res.json({ id: resultado.rows[0].id });
 });
 
 app.put('/api/professores/:id', async function(req, res) {
-  const { nome, telefone, data_nascimento, unidades, modalidades } = req.body;
-  await pool.query(
-    'UPDATE professores SET nome=$1, telefone=$2, data_nascimento=$3, unidades=$4, modalidades=$5 WHERE id=$6',
-    [nome, telefone, data_nascimento, unidades, modalidades, req.params.id]
-  );
+  const { nome, telefone, data_nascimento, unidades, modalidades, usuario, senha } = req.body;
+
+  if (senha) {
+    await pool.query(
+      'UPDATE professores SET nome=$1, telefone=$2, data_nascimento=$3, unidades=$4, modalidades=$5, usuario=$6, senha=$7 WHERE id=$8',
+      [nome, telefone, data_nascimento, unidades, modalidades, usuario, senha, req.params.id]
+    );
+  } else {
+    await pool.query(
+      'UPDATE professores SET nome=$1, telefone=$2, data_nascimento=$3, unidades=$4, modalidades=$5, usuario=$6 WHERE id=$7',
+      [nome, telefone, data_nascimento, unidades, modalidades, usuario, req.params.id]
+    );
+  }
   res.json({ ok: true });
 });
 
