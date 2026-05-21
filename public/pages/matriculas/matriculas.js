@@ -1,16 +1,29 @@
 let idMatriculaEditando = null;
 
 async function carregarProfessores() {
-  const resp = await fetch('/api/professores');
-  const professores = await resp.json();
-  const select = document.getElementById('mat-professor');
-  select.innerHTML = '<option value="">Selecione o professor</option>';
-  professores.forEach(function(p) {
-    const option = document.createElement('option');
-    option.value = p.id;
-    option.textContent = p.nome;
-    select.appendChild(option);
-  });
+  try {
+    const resp = await fetch('/api/professores');
+    const contentType = resp.headers.get('content-type');
+
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error('Resposta não é JSON:', await resp.text());
+      return;
+    }
+
+    const professores = await resp.json();
+    const select = document.getElementById('mat-professor');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Selecione o professor</option>';
+    professores.forEach(function(p) {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = p.nome;
+      select.appendChild(option);
+    });
+  } catch(erro) {
+    console.error('Erro ao carregar professores:', erro.message);
+  }
 }
 
 async function atualizarHorarios() {
