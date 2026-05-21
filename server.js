@@ -153,36 +153,43 @@ app.get('/api/alunos', async function(req, res) {
 });
 
 app.post('/api/alunos', async function(req, res) {
-  const {
-    nome, data_nascimento, cpf, telefone, unidade,
-    rua, numero, bairro, cidade,
-    nome_responsavel, contato_responsavel,
-    professor_id, modalidade, data_matricula,
-    vencimento, valor_mensalidade, horario_id,
-    dias_escolhidos, status, observacoes
-  } = req.body;
-
-  const resultado = await pool.query(`
-    INSERT INTO alunos (
+  try {
+    const {
       nome, data_nascimento, cpf, telefone, unidade,
       rua, numero, bairro, cidade,
       nome_responsavel, contato_responsavel,
       professor_id, modalidade, data_matricula,
       vencimento, valor_mensalidade, horario_id,
       dias_escolhidos, status, observacoes
-    ) VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-      $11,$12,$13,$14,$15,$16,$17,$18,$19,$20
-    ) RETURNING id
-  `, [
-    nome, data_nascimento, cpf, telefone, unidade,
-    rua, numero, bairro, cidade,
-    nome_responsavel, contato_responsavel,
-    professor_id, modalidade, data_matricula,
-    vencimento, valor_mensalidade, horario_id,
-    dias_escolhidos, status || 'ativo', observacoes
-  ]);
-  res.json({ id: resultado.rows[0].id });
+    } = req.body;
+
+    const resultado = await pool.query(`
+      INSERT INTO alunos (
+        nome, data_nascimento, cpf, telefone, unidade,
+        rua, numero, bairro, cidade,
+        nome_responsavel, contato_responsavel,
+        professor_id, modalidade, data_matricula,
+        vencimento, valor_mensalidade, horario_id,
+        dias_escolhidos, status, observacoes
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+        $11,$12,$13,$14,$15,$16,$17,$18,$19,$20
+      ) RETURNING id
+    `, [
+      nome, data_nascimento || null, cpf || null, telefone || null, unidade,
+      rua || null, numero || null, bairro || null, cidade || null,
+      nome_responsavel || null, contato_responsavel || null,
+      professor_id || null, modalidade || null, data_matricula || null,
+      vencimento || null, valor_mensalidade || null, horario_id || null,
+      dias_escolhidos || null, status || 'ativo', observacoes || null
+    ]);
+
+    res.json({ id: resultado.rows[0].id });
+
+  } catch(erro) {
+    console.error('Erro ao cadastrar aluno:', erro.message);
+    res.status(500).json({ erro: erro.message });
+  }
 });
 
 app.put('/api/alunos/:id', async function(req, res) {
