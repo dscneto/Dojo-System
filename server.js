@@ -158,9 +158,10 @@ app.post('/api/alunos', async function(req, res) {
       nome, data_nascimento, cpf, telefone, unidade,
       rua, numero, bairro, cidade,
       nome_responsavel, contato_responsavel,
-      professor_id, modalidade, data_matricula,
-      vencimento, valor_mensalidade, horario_id,
-      dias_escolhidos, status, observacoes
+      professor_id, modalidade, horario_id, dias_escolhidos, valor_mensalidade,
+      professor2_id, modalidade2, horario2_id, dias_escolhidos2, valor_mensalidade2,
+      professor3_id, modalidade3, horario3_id, dias_escolhidos3, valor_mensalidade3,
+      data_matricula, vencimento, status, observacoes
     } = req.body;
 
     const resultado = await pool.query(`
@@ -168,24 +169,26 @@ app.post('/api/alunos', async function(req, res) {
         nome, data_nascimento, cpf, telefone, unidade,
         rua, numero, bairro, cidade,
         nome_responsavel, contato_responsavel,
-        professor_id, modalidade, data_matricula,
-        vencimento, valor_mensalidade, horario_id,
-        dias_escolhidos, status, observacoes
+        professor_id, modalidade, horario_id, dias_escolhidos, valor_mensalidade,
+        professor2_id, modalidade2, horario2_id, dias_escolhidos2, valor_mensalidade2,
+        professor3_id, modalidade3, horario3_id, dias_escolhidos3, valor_mensalidade3,
+        data_matricula, vencimento, status, observacoes
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-        $11,$12,$13,$14,$15,$16,$17,$18,$19,$20
+        $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+        $21,$22,$23,$24,$25,$26,$27,$28,$29,$30
       ) RETURNING id
     `, [
       nome, data_nascimento || null, cpf || null, telefone || null, unidade,
       rua || null, numero || null, bairro || null, cidade || null,
       nome_responsavel || null, contato_responsavel || null,
-      professor_id || null, modalidade || null, data_matricula || null,
-      vencimento || null, valor_mensalidade || null, horario_id || null,
-      dias_escolhidos || null, status || 'ativo', observacoes || null
+      professor_id || null, modalidade || null, horario_id || null, dias_escolhidos || null, valor_mensalidade || null,
+      professor2_id || null, modalidade2 || null, horario2_id || null, dias_escolhidos2 || null, valor_mensalidade2 || null,
+      professor3_id || null, modalidade3 || null, horario3_id || null, dias_escolhidos3 || null, valor_mensalidade3 || null,
+      data_matricula || null, vencimento || null, status || 'ativo', observacoes || null
     ]);
 
     res.json({ id: resultado.rows[0].id });
-
   } catch(erro) {
     console.error('Erro ao cadastrar aluno:', erro.message);
     res.status(500).json({ erro: erro.message });
@@ -193,34 +196,43 @@ app.post('/api/alunos', async function(req, res) {
 });
 
 app.put('/api/alunos/:id', async function(req, res) {
-  const {
-    nome, data_nascimento, cpf, telefone, unidade,
-    rua, numero, bairro, cidade,
-    nome_responsavel, contato_responsavel,
-    professor_id, modalidade, data_matricula,
-    vencimento, valor_mensalidade, horario_id,
-    dias_escolhidos, status, observacoes
-  } = req.body;
+  try {
+    const {
+      nome, data_nascimento, cpf, telefone, unidade,
+      rua, numero, bairro, cidade,
+      nome_responsavel, contato_responsavel,
+      professor_id, modalidade, horario_id, dias_escolhidos, valor_mensalidade,
+      professor2_id, modalidade2, horario2_id, dias_escolhidos2, valor_mensalidade2,
+      professor3_id, modalidade3, horario3_id, dias_escolhidos3, valor_mensalidade3,
+      data_matricula, vencimento, status, observacoes
+    } = req.body;
 
-  await pool.query(`
-    UPDATE alunos SET
-      nome=$1, data_nascimento=$2, cpf=$3, telefone=$4, unidade=$5,
-      rua=$6, numero=$7, bairro=$8, cidade=$9,
-      nome_responsavel=$10, contato_responsavel=$11,
-      professor_id=$12, modalidade=$13, data_matricula=$14,
-      vencimento=$15, valor_mensalidade=$16, horario_id=$17,
-      dias_escolhidos=$18, status=$19, observacoes=$20
-    WHERE id=$21
-  `, [
-    nome, data_nascimento, cpf, telefone, unidade,
-    rua, numero, bairro, cidade,
-    nome_responsavel, contato_responsavel,
-    professor_id, modalidade, data_matricula,
-    vencimento, valor_mensalidade, horario_id,
-    dias_escolhidos, status, observacoes,
-    req.params.id
-  ]);
-  res.json({ ok: true });
+    await pool.query(`
+      UPDATE alunos SET
+        nome=$1, data_nascimento=$2, cpf=$3, telefone=$4, unidade=$5,
+        rua=$6, numero=$7, bairro=$8, cidade=$9,
+        nome_responsavel=$10, contato_responsavel=$11,
+        professor_id=$12, modalidade=$13, horario_id=$14, dias_escolhidos=$15, valor_mensalidade=$16,
+        professor2_id=$17, modalidade2=$18, horario2_id=$19, dias_escolhidos2=$20, valor_mensalidade2=$21,
+        professor3_id=$22, modalidade3=$23, horario3_id=$24, dias_escolhidos3=$25, valor_mensalidade3=$26,
+        data_matricula=$27, vencimento=$28, status=$29, observacoes=$30
+      WHERE id=$31
+    `, [
+      nome, data_nascimento || null, cpf || null, telefone || null, unidade,
+      rua || null, numero || null, bairro || null, cidade || null,
+      nome_responsavel || null, contato_responsavel || null,
+      professor_id || null, modalidade || null, horario_id || null, dias_escolhidos || null, valor_mensalidade || null,
+      professor2_id || null, modalidade2 || null, horario2_id || null, dias_escolhidos2 || null, valor_mensalidade2 || null,
+      professor3_id || null, modalidade3 || null, horario3_id || null, dias_escolhidos3 || null, valor_mensalidade3 || null,
+      data_matricula || null, vencimento || null, status || 'ativo', observacoes || null,
+      req.params.id
+    ]);
+
+    res.json({ ok: true });
+  } catch(erro) {
+    console.error('Erro ao atualizar aluno:', erro.message);
+    res.status(500).json({ erro: erro.message });
+  }
 });
 
 app.delete('/api/alunos/:id', async function(req, res) {
